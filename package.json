@@ -26,7 +26,7 @@
     "storybook": "start-storybook -p 9009 -s public --quiet",
     "storybook-build": "build-storybook -s public --quiet",
     "install": "node scripts/postinstall.js",
-    "install:pika": "pika-web --dest ./esm-dist/web_modules/",
+    "install:pika": "pika-web --dest ./esm-dist/web_modules/ --clean",
     "uninstall": "node scripts/postinstall.js",
     "lint": "node scripts/lint.js",
     "lint:report": "node scripts/lint.js --reportOnly"
@@ -73,9 +73,9 @@
     "npm-run-all": "^4.1.5",
     "pvtsutils": "^1.0.4",
     "qrcode": "^1.4.4",
-    "react": "^16.12.0",
+    "react": "npm:@reactesm/react",
     "react-app-rewired": "^2.1.5",
-    "react-dom": "^16.11.0",
+    "react-dom": "npm:@reactesm/react-dom",
     "react-router-dom": "^5.0.0",
     "react-scripts": "^3.2.0",
     "tiny-secp256k1": "^1.1.2",
@@ -90,7 +90,20 @@
     "webpack-web-ext-plugin": "github:DimensionDev/webpack-web-ext-plugin"
   },
   "@pika/web": {
-    "webDependencies": ["elliptic"]
+    "webDependencies": [
+      "elliptic",
+      "@holoflows/kit",
+      "@holoflows/kit/es/util/sleep.js",
+      "lodash-es",
+      "idb/with-async-ittr.js",
+      "gun/gun.min.js",
+      "gun/lib/then.js",
+      "gun/sea.js",
+      "pvtsutils",
+      "react",
+      "react-dom",
+      "serialijse/dist/serialijse.bundle.min.js"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
