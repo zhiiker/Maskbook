@@ -26,7 +26,7 @@
     "storybook": "start-storybook -p 9009 -s public --quiet",
     "storybook-build": "build-storybook -s public --quiet",
     "install": "node scripts/postinstall.js",
-    "install:pika": "pika-web --dest ./esm-dist/web_modules/ --clean",
+    "install:pika": "pika install --dest ./esm-dist/web_modules/ --clean",
     "uninstall": "node scripts/postinstall.js",
     "lint": "node scripts/lint.js",
     "lint:report": "node scripts/lint.js --reportOnly"
@@ -93,7 +93,6 @@
     "webDependencies": [
       "elliptic",
       "@holoflows/kit",
-      "@holoflows/kit/es/util/sleep.js",
       "lodash-es",
       "idb/with-async-ittr.js",
       "gun/gun.min.js",
@@ -102,12 +101,15 @@
       "pvtsutils",
       "react",
       "react-dom",
-      "serialijse/dist/serialijse.bundle.min.js"
+      "typeson",
+      "node-stego/es/dom.js",
+      "node-stego/es/transform.js",
+      "node-stego/es/grayscale.js"
     ]
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
-    "@pika/web": "^0.6.1",
+    "@pika/web": "latest",
     "@storybook/addon-actions": "^5.2.5",
     "@storybook/addon-info": "^5.2.6",
     "@storybook/addon-knobs": "^5.2.6",
@@ -136,8 +138,16 @@
     "yargs": "^14.2.0"
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "husky": {
     "hooks": {
@@ -146,6 +156,9 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": ["node scripts/lint.js", "git add"]
+    "*.{ts,tsx,js,jsx}": [
+      "node scripts/lint.js",
+      "git add"
+    ]
   }
 }
