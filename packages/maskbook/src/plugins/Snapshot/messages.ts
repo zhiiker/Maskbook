@@ -18,11 +18,11 @@ interface SnapshotMessages {
     voteConfirmDialogUpdated: VoteConfirmDialogEvent
 }
 
-export const PluginSnapshotMessages: WebExtensionMessage<SnapshotMessages> = createPluginMessage<SnapshotMessages>(
-    SNAPSHOT_PLUGIN_ID,
-)
+if (import.meta.webpackHot) import.meta.webpackHot.accept()
+export const PluginSnapshotMessages: WebExtensionMessage<SnapshotMessages> =
+    createPluginMessage<SnapshotMessages>(SNAPSHOT_PLUGIN_ID)
 export const PluginSnapshotRPC = createPluginRPC(
     SNAPSHOT_PLUGIN_ID,
-    () => import('./services'),
+    () => import('./Worker/services'),
     PluginSnapshotMessages.events.rpc,
 )

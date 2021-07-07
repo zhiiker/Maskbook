@@ -1,7 +1,8 @@
+import { useMemo, useState } from 'react'
+import { useUpdateEffect } from 'react-use'
 import {
     Box,
     Button,
-    createStyles,
     makeStyles,
     Skeleton,
     Table,
@@ -12,19 +13,14 @@ import {
     TableRow,
     Typography,
 } from '@material-ui/core'
+import { useAccount, useChainId } from '@masknet/web3-shared'
 import { useTransactions } from '../../../../plugins/Wallet/hooks/useTransactions'
-import { useAccount } from '../../../../web3/hooks/useAccount'
 import { Row } from './Row'
-import { useMemo, useState } from 'react'
 import { FilterTransactionType } from '../../../../plugins/Wallet/types'
-import { useChainId } from '../../../../web3/hooks/useBlockNumber'
-import { useUpdateEffect } from 'react-use'
 
-const useStyles = makeStyles(() =>
-    createStyles({
-        fixed: { height: 'calc(100% - 52px)' },
-    }),
-)
+const useStyles = makeStyles(() => ({
+    fixed: { height: 'calc(100% - 52px)' },
+}))
 
 export interface TransactionListProps {
     transactionType: FilterTransactionType

@@ -1,5 +1,5 @@
 import { create as createJSS, SheetsRegistry as JSSSheetsRegistry } from 'jss'
-import { jssPreset, StylesProvider as JSSStylesProvider, createGenerateClassName } from '@material-ui/core/styles'
+import { jssPreset, StylesProvider as JSSStylesProvider, createGenerateClassName } from '@material-ui/styles'
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react'
 import createEmotionCache, { EmotionCache } from '@emotion/cache'
 import { useMemo } from 'react'
@@ -158,4 +158,6 @@ function patchJSSDomRenderer() {
         this.element.textContent = `\n${sheet.toString()}\n`
     }
 }
-patchJSSDomRenderer()
+try {
+    patchJSSDomRenderer()
+} catch {}

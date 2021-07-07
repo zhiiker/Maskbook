@@ -1,6 +1,11 @@
 import { memoizePromise } from '@dimensiondev/kit'
-import { formatChecksumAddress } from '../../../plugins/Wallet/formatter'
-import { EthereumTokenType, ChainId, ERC20TokenDetailed } from '../../../web3/types'
+import {
+    ChainId,
+    ERC20TokenDetailed,
+    EthereumTokenType,
+    formatEthereumAddress,
+    getChainDetailed,
+} from '@masknet/web3-shared'
 
 interface TokenList {
     keywords: string[]
@@ -13,6 +18,7 @@ interface TokenList {
         name: string
         symbol: string
         decimals: number
+        logoURI?: string
     }[]
     version: {
         major: number
@@ -36,14 +42,14 @@ const fetchTokenList = memoizePromise(
  */
 export async function fetchERC20TokensFromTokenList(
     url: string,
-    chainId: ChainId = ChainId.Mainnet,
+    chainId = ChainId.Mainnet,
 ): Promise<ERC20TokenDetailed[]> {
     return (await fetchTokenList(url)).tokens
         .filter(
             (x) =>
                 x.chainId === chainId &&
                 (process.env.NODE_ENV === 'production' && process.env.build === 'stable'
-                    ? chainId === ChainId.Mainnet
+                    ? getChainDetailed(chainId)?.network === 'mainnet'
                     : true),
         )
         .map((x) => ({
@@ -59,7 +65,7 @@ export async function fetchERC20TokensFromTokenList(
  */
 export async function fetchERC20TokensFromTokenLists(
     urls: string[],
-    chainId: ChainId = ChainId.Mainnet,
+    chainId = ChainId.Mainnet,
 ): Promise<ERC20TokenDetailed[]> {
     const uniqueSet = new Set<string>()
     const tokens = (await Promise.allSettled(urls.map((x) => fetchERC20TokensFromTokenList(x, chainId)))).flatMap((x) =>
@@ -67,7 +73,7 @@ export async function fetchERC20TokensFromTokenLists(
     )
     return tokens.filter((x) => {
         // checksummed address in one loop
-        x.address = formatChecksumAddress(x.address)
+        x.address = formatEthereumAddress(x.address)
 
         const key = x.address.toLowerCase()
         if (uniqueSet.has(key)) return false

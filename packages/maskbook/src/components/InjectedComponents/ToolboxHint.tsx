@@ -1,32 +1,33 @@
-import { makeStyles, Typography, MenuItem } from '@material-ui/core'
+import { makeStyles, MenuItem, Typography } from '@material-ui/core'
+import classNames from 'classnames'
+import {
+    useAccount,
+    useChainId,
+    resolveChainColor,
+    useChainDetailed,
+    useChainIdValid,
+    formatEthereumAddress,
+} from '@masknet/web3-shared'
+import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import { MaskbookSharpIconOfSize, WalletSharp } from '../../resources/MaskbookIcon'
 import { ToolIconURLs } from '../../resources/tool-icon'
 import { Image } from '../shared/Image'
 import { useMenu } from '../../utils/hooks/useMenu'
 import { useCallback } from 'react'
 import { MaskMessage } from '../../utils/messages'
-import { RedPacketCompositionEntry } from '../../plugins/RedPacket/define'
-import { FileServiceCompositionEntry } from '../../plugins/FileService/UI-define'
-import { ITO_CompositionEntry } from '../../plugins/ITO/define'
-import { useControlledDialog } from '../../plugins/Collectible/UI/useControlledDialog'
-import { useAccount } from '../../web3/hooks/useAccount'
-import { useRemoteControlledDialog, useRemoteControlledDialogEvent } from '../../utils/hooks/useRemoteControlledDialog'
+import { RedPacketPluginID } from '../../plugins/RedPacket/constants'
+import { ITO_PluginID } from '../../plugins/ITO/constants'
+import { FileServicePluginID } from '../../plugins/FileService/constants'
+import { useControlledDialog } from '../../plugins/Collectible/SNSAdaptor/useControlledDialog'
+import { useRemoteControlledDialog } from '@masknet/shared'
 import { PluginTransakMessages } from '../../plugins/Transak/messages'
 import { PluginTraderMessages } from '../../plugins/Trader/messages'
+import { WalletMessages } from '../../plugins/Wallet/messages'
 import { Flags } from '../../utils/flags'
 import { useStylesExtends } from '../custom-ui-helper'
-import classNames from 'classnames'
-import { useWallet } from '../../plugins/Wallet/hooks/useWallet'
-import { ClaimAllDialog } from '../../plugins/ITO/UI/ClaimAllDialog'
-import { ProviderIcon } from '../shared/ProviderIcon'
-import { useValueRef } from '../../utils/hooks/useValueRef'
-import { currentSelectedWalletProviderSettings } from '../../plugins/Wallet/settings'
-import { WalletMessages } from '../../plugins/Wallet/messages'
-import { formatEthereumAddress } from '../../plugins/Wallet/formatter'
-import { useChainId } from '../../web3/hooks/useBlockNumber'
-import { ChainId } from '../../web3/types'
-import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
-import { resolveChainColor } from '../../web3/pipes'
+import { ClaimAllDialog } from '../../plugins/ITO/SNSAdaptor/ClaimAllDialog'
+import { WalletIcon } from '../shared/WalletIcon'
+import { useI18N } from '../../utils'
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -37,6 +38,7 @@ const useStyles = makeStyles((theme) => ({
                 ? 'rgba(255, 255, 255, 0.2) 0px 0px 15px, rgba(255, 255, 255, 0.15) 0px 0px 3px 1px'
                 : 'rgba(101, 119, 134, 0.2) 0px 0px 15px, rgba(101, 119, 134, 0.15) 0px 0px 3px 1px'
         }`,
+        backgroundImage: 'none',
     },
     menu: {
         paddingTop: 0,
@@ -88,6 +90,11 @@ const useStyles = makeStyles((theme) => ({
         color: theme.palette.mode === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(15, 20, 25)',
         marginLeft: 22,
     },
+    iconWrapper: {
+        position: 'relative',
+        height: 24,
+        width: 24,
+    },
     icon: {
         color: theme.palette.mode === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(15, 20, 25)',
         width: 24,
@@ -110,11 +117,12 @@ const useStyles = makeStyles((theme) => ({
 
 interface ToolboxHintProps extends withClasses<never> {}
 export function ToolboxHint(props: ToolboxHintProps) {
+    const { t } = useI18N()
     const classes = useStylesExtends(useStyles(), props)
     const account = useAccount()
-    const selectedWallet = useWallet()
     const chainId = useChainId()
-    const selectedWalletProvider = useValueRef(currentSelectedWalletProviderSettings)
+    const chainIdValid = useChainIdValid()
+    const chainDetailed = useChainDetailed()
 
     //#region Encrypted message
     const openEncryptedMessage = useCallback(
@@ -124,27 +132,27 @@ export function ToolboxHint(props: ToolboxHintProps) {
     //#endregion
 
     //#region Wallet
-    const { onOpen: onSelectWalletDialogOpen } = useRemoteControlledDialogEvent(
+    const { openDialog: openSelectWalletDialog } = useRemoteControlledDialog(
         WalletMessages.events.walletStatusDialogUpdated,
     )
 
-    const { onOpen: onSelectProviderDialogOpen } = useRemoteControlledDialogEvent(
-        WalletMessages.events.selectProviderDialogUpdated,
+    const { openDialog: openCreateImportDialog } = useRemoteControlledDialog(
+        WalletMessages.events.createImportWalletDialogUpdated,
     )
     const openWallet = useCallback(() => {
-        if (selectedWallet) {
-            onSelectWalletDialogOpen()
+        if (account) {
+            openSelectWalletDialog()
         } else {
-            onSelectProviderDialogOpen()
+            openCreateImportDialog()
         }
-    }, [])
+    }, [account])
     //#endregion
 
     //#region Red packet
     const openRedPacket = useCallback(() => {
         openEncryptedMessage()
         setTimeout(() => {
-            RedPacketCompositionEntry.onClick()
+            MaskMessage.events.activatePluginCompositionEntry.sendToLocal(RedPacketPluginID)
         })
     }, [openEncryptedMessage])
     //#endregion
@@ -153,7 +161,7 @@ export function ToolboxHint(props: ToolboxHintProps) {
     const openFileService = useCallback(() => {
         openEncryptedMessage()
         setTimeout(() => {
-            FileServiceCompositionEntry.onClick()
+            MaskMessage.events.activatePluginCompositionEntry.sendToLocal(FileServicePluginID)
         })
     }, [openEncryptedMessage])
     //#endregion
@@ -162,15 +170,15 @@ export function ToolboxHint(props: ToolboxHintProps) {
     const openITO = useCallback(() => {
         openEncryptedMessage()
         setTimeout(() => {
-            ITO_CompositionEntry.onClick()
+            MaskMessage.events.activatePluginCompositionEntry.sendToLocal(ITO_PluginID)
         })
     }, [openEncryptedMessage])
     //#endregion
 
     //#region Buy currency
-    const [, setBuyDialogOpen] = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
+    const { setDialog: setBuyDialog } = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
     const openBuyCurrency = useCallback(() => {
-        setBuyDialogOpen({
+        setBuyDialog({
             open: true,
             address: account,
         })
@@ -178,7 +186,7 @@ export function ToolboxHint(props: ToolboxHintProps) {
     //#endregion
 
     //#region Swap
-    const { onOpen: openSwapDialog } = useRemoteControlledDialogEvent(PluginTraderMessages.events.swapDialogUpdated)
+    const { openDialog: openSwapDialog } = useRemoteControlledDialog(PluginTraderMessages.events.swapDialogUpdated)
     //#endregion
 
     //#region Claim All ITO
@@ -213,10 +221,12 @@ export function ToolboxHint(props: ToolboxHintProps) {
                     <Typography className={classes.text}>{ToolIconURLs.token.text}</Typography>
                 </MenuItem>
             ) : null,
-            <MenuItem onClick={openSwapDialog} className={classes.menuItem}>
-                <Image src={ToolIconURLs.swap.image} width={19} height={19} />
-                <Typography className={classes.text}>{ToolIconURLs.swap.text}</Typography>
-            </MenuItem>,
+            chainIdValid ? (
+                <MenuItem onClick={openSwapDialog} className={classes.menuItem}>
+                    <Image src={ToolIconURLs.swap.image} width={19} height={19} />
+                    <Typography className={classes.text}>{ToolIconURLs.swap.text}</Typography>
+                </MenuItem>
+            ) : null,
             <MenuItem onClick={onClaimAllDialogOpen} className={classes.menuItem}>
                 <Image src={ToolIconURLs.claim.image} width={19} height={19} />
                 <Typography className={classes.text}>{ToolIconURLs.claim.text}</Typography>
@@ -245,19 +255,19 @@ export function ToolboxHint(props: ToolboxHintProps) {
 
             <div className={classes.wrapper} onClick={openWallet}>
                 <div className={classes.button}>
-                    {selectedWallet ? (
-                        <ProviderIcon
-                            classes={{ icon: classes.icon }}
-                            size={24}
-                            providerType={selectedWalletProvider}
-                        />
+                    {account && chainIdValid ? (
+                        <WalletIcon />
                     ) : (
                         <WalletSharp classes={{ root: classes.icon }} size={24} />
                     )}
 
                     <Typography className={classes.title}>
-                        {account ? formatEthereumAddress(account, 4) : 'Connect Wallet'}
-                        {chainId !== ChainId.Mainnet && selectedWallet ? (
+                        {account
+                            ? chainIdValid
+                                ? formatEthereumAddress(account, 4)
+                                : t('plugin_wallet_wrong_network')
+                            : t('plugin_wallet_on_connect')}
+                        {account && chainIdValid && chainDetailed?.network !== 'mainnet' ? (
                             <FiberManualRecordIcon
                                 className={classes.chainIcon}
                                 style={{

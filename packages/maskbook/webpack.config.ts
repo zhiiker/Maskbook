@@ -94,12 +94,16 @@ function config(opts: {
                 'xhr2-cookies': require.resolve('./miscs/package-overrides/xhr2-cookies'),
                 // Monorepo building speed optimization
                 // Those packages are also installed as dependencies so they appears in node_modules
-                // By aliasing them to the original position, we can speed up the compile (cause no need to wait for tsc)
-                '@dimensiondev/dashboard': require.resolve('../dashboard/src/entry.tsx'),
-                '@dimensiondev/icons': require.resolve('../icons/index.ts'),
-                '@dimensiondev/maskbook-shared': require.resolve('../shared/src/index.ts'),
-                '@dimensiondev/maskbook-theme': require.resolve('../theme/src/theme.ts'),
-                '@dimensiondev/shared': require.resolve('../shared/src/index.ts'),
+                // By aliasing them to the original position, we can speed up the compile because there is no need to wait tsc build them to the dist folder.
+                '@masknet/dashboard': require.resolve('../dashboard/src/entry.tsx'),
+                '@masknet/shared': require.resolve('../shared/src/index.ts'),
+                '@masknet/theme/constants': require.resolve('../theme/src/constants.ts'),
+                '@masknet/theme': require.resolve('../theme/src/theme.ts'),
+                '@masknet/icons': require.resolve('../icons/index.ts'),
+                '@masknet/plugin-infra': require.resolve('../plugin-infra/src/index.ts'),
+                '@masknet/plugin-example': require.resolve('../plugins/example/src/index.ts'),
+                '@masknet/external-plugin-previewer': require.resolve('../external-plugin-previewer/src/index.tsx'),
+                '@masknet/web3-shared': require.resolve('../web3-shared/src/index.ts'),
             },
             // Polyfill those Node built-ins
             fallback: {
@@ -155,7 +159,7 @@ function config(opts: {
             new WatchMissingModulesPlugin(path.resolve('node_modules')),
             // Note: In development mode gitInfo will share across cache (and get inaccurate result). I (@Jack-Works) think this is a valuable trade-off.
             (mode === 'development' ? EnvironmentPluginCache : EnvironmentPluginNoCache)({
-                ...getGitInfo(),
+                ...getGitInfo(target.isReproducibleBuild),
                 ...target.runtimeEnv,
             }),
             new EnvironmentPlugin({ NODE_ENV: mode, NODE_DEBUG: false, STORYBOOK: false }),
@@ -170,6 +174,9 @@ function config(opts: {
         ].filter(nonNullable),
         optimization: {
             minimize: false,
+            // Injected scripts must have it's own runtime chunks.
+            // HMR must have single runtime chunks
+            runtimeChunk: disableHMR ? undefined : 'single',
             splitChunks: {
                 // Chrome bug https://bugs.chromium.org/p/chromium/issues/detail?id=1108199
                 automaticNameDelimiter: '-',
@@ -202,6 +209,9 @@ function config(opts: {
             hotUpdateMainFilename: 'hot.[runtime].[fullhash].json',
             globalObject: 'globalThis',
             publicPath: '/',
+            // clean: undefined,
+            // do not use output.clean
+            // we're using multiple configs (main and injected script), that will cause injected script output get removed when the main config starts to build.
         },
         ignoreWarnings: [/Failed to parse source map/],
         // @ts-ignore
@@ -234,7 +244,7 @@ function config(opts: {
         // overlay is not working in our environment
         return [
             new HotModuleReplacementPlugin(),
-            !disableReactHMR && new ReactRefreshWebpackPlugin({ overlay: false }),
+            !disableReactHMR && new ReactRefreshWebpackPlugin({ overlay: false, esModule: true }),
         ].filter(nonNullable)
     }
 }
@@ -272,9 +282,12 @@ export default async function (cli_env: Record<string, boolean> = {}, argv: { mo
             'options-page': withBrowserPolyfill(...withReactDevTools(src('./src/extension/options-page/index.tsx'))),
             'dashboard-next': withBrowserPolyfill(...withReactDevTools(src('./src/extension/dashboard/index.tsx'))),
             'content-script': withBrowserPolyfill(...withReactDevTools(src('./src/content-script.ts'))),
-            popup: withBrowserPolyfill(...withReactDevTools(src('./src/extension/popup-page/index.tsx'))),
+            'browser-action': withBrowserPolyfill(
+                ...withReactDevTools(src('./src/extension/browser-action/index.tsx')),
+            ),
             'background-service': withBrowserPolyfill(src('./src/background-service.ts')),
             debug: withBrowserPolyfill(src('./src/extension/debug-page')),
+            popups: withBrowserPolyfill(src('./src/extension/popups/render.tsx')),
         }
         if (isManifestV3) delete main.entry['background-script']
         if (mode === 'production') delete main.entry['dashboard-next']
@@ -283,9 +296,10 @@ export default async function (cli_env: Record<string, boolean> = {}, argv: { mo
         }
         main.plugins!.push(
             getHTMLPlugin({ chunks: ['options-page'], filename: 'index.html' }),
-            getHTMLPlugin({ chunks: ['popup'], filename: 'popup.html' }),
+            getHTMLPlugin({ chunks: ['browser-action'], filename: 'browser-action.html' }),
             getHTMLPlugin({ chunks: ['content-script'], filename: 'generated__content__script.html' }),
             getHTMLPlugin({ chunks: ['debug'], filename: 'debug.html' }),
+            getHTMLPlugin({ chunks: ['popups'], filename: 'popups.html' }),
         ) // generate pages for each entry
         if (mode === 'development')
             main.plugins!.push(getHTMLPlugin({ chunks: ['dashboard-next'], filename: 'next.html' }))
@@ -436,8 +450,8 @@ function getCompilationInfo(argv: any) {
 
 export type Target = ReturnType<typeof getCompilationInfo>
 /** Get git info */
-function getGitInfo() {
-    if (git.isRepository())
+function getGitInfo(reproducible: boolean) {
+    if (!reproducible && git.isRepository())
         return {
             BUILD_DATE: new Date().toISOString(),
             VERSION: git.describe('--dirty'),
@@ -476,11 +490,11 @@ function getHTMLPlugin(options: HTMLPlugin.Options = {}) {
     })
 }
 // Cleanup old HMR files
-promises.readdir(path.join(__dirname, './dist')).then(
+promises.readdir(path.join(__dirname, '../../dist')).then(
     async (files) => {
         for (const file of files) {
             if (!file.includes('hot')) continue
-            await promises.unlink(path.join(__dirname, './dist/', file)).catch(() => {})
+            await promises.unlink(path.join(__dirname, '../../dist/', file)).catch(() => {})
         }
     },
     () => {},

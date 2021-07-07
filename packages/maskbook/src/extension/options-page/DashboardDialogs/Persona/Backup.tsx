@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { User } from 'react-feather'
-import { QRCode } from '../../../../components/shared/qrcode'
-import { useI18N } from '../../../../utils/i18n-next-ui'
-import { compressBackupFile } from '../../../../utils/type-transform/BackupFileShortRepresentation'
-import { encodeArrayBuffer, encodeText } from '../../../../utils/type-transform/String-ArrayBuffer'
+import { useI18N, compressBackupFile, encodeArrayBuffer, encodeText } from '../../../../utils'
+import { QRCode } from '@masknet/shared'
 import Services from '../../../service'
-import AbstractTab, { AbstractTabProps } from '../../DashboardComponents/AbstractTab'
+import AbstractTab, { AbstractTabProps } from '../../../../components/shared/AbstractTab'
 import ShowcaseBox from '../../DashboardComponents/ShowcaseBox'
 import { DashboardDialogCore, DashboardDialogWrapper, WrappedDialogProps } from '../Base'
 import type { PersonaProps } from './types'
@@ -69,7 +67,8 @@ export function DashboardPersonaBackupDialog(props: WrappedDialogProps<PersonaPr
                 iconColor="#5FDD97"
                 primary={t('backup_persona')}
                 secondary={t('dashboard_backup_persona_hint')}
-                content={<AbstractTab {...tabProps}></AbstractTab>}></DashboardDialogWrapper>
+                content={<AbstractTab {...tabProps} />}
+            />
         </DashboardDialogCore>
     )
 }

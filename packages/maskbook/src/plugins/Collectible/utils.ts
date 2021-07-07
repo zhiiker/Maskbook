@@ -7,8 +7,7 @@ import {
     raribleHostnames,
     rariblePathnameRegexMatcher,
 } from './constants'
-import { formatBalance } from '../Wallet/formatter'
-import { ChainId } from '../../web3/types'
+import { ChainId, formatBalance } from '@masknet/web3-shared'
 
 export function checkUrl(url: string): boolean {
     const protocol = 'https://'
@@ -61,11 +60,8 @@ export function getAssetInfoFromURL(url?: string) {
 
 export function getOrderUnitPrice(order: Order) {
     if (!order.currentPrice || !order.paymentTokenContract?.decimals) return
-    const price = formatBalance(new BigNumber(order.currentPrice), order.paymentTokenContract.decimals)
-    const quantity = formatBalance(
-        new BigNumber(order.quantity),
-        new BigNumber(order.quantity).toString() !== '1' ? 8 : 0,
-    )
+    const price = formatBalance(order.currentPrice, order.paymentTokenContract.decimals)
+    const quantity = formatBalance(order.quantity, new BigNumber(order.quantity).toString() !== '1' ? 8 : 0)
 
     return new BigNumber(price).dividedBy(quantity).toFixed(4, 1).toString()
 }

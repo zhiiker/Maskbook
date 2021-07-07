@@ -21,6 +21,7 @@ export interface Proposal {
     status: string
     authorName: string | null
     authorAvatar: string | null
+    network: string
 }
 
 /**
@@ -45,6 +46,7 @@ export interface ProposalPayload {
     name: string
     metadata: {
         strategies: Strategy[]
+        network: string
     }
 }
 
@@ -60,7 +62,7 @@ export interface ProposalMessage {
 /**
  * Payload of a vote
  */
-export interface Vote {
+export interface VoteItem {
     choice: string
     address: string
     authorIpfsHash: string
@@ -69,6 +71,7 @@ export interface Vote {
     balance: number
     /** the consist detail of voting power */
     scores: number[]
+    strategySymbol: string
     sig: string
     authorName: string | null
     authorAvatar: string | null
@@ -85,8 +88,8 @@ export interface Vote {
     }
 }
 
-export type Votes = {
-    [key in string]: Vote
+export type VoteItemList = {
+    [key in string]: VoteItem
 }
 
 export interface ProposalResult {
@@ -105,7 +108,7 @@ export interface ProposalResult {
  * https://3boxlabs.com/
  */
 export interface Profile3Box {
-    eth_address: string
+    contract_address: string
     image: string | null
     name: string | null
 }

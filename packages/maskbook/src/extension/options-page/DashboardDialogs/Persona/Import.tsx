@@ -1,12 +1,12 @@
 import { TextField } from '@material-ui/core'
-import { useSnackbar } from 'notistack'
+import { useSnackbar } from '@masknet/theme'
 import { useState } from 'react'
 import { UserCheck } from 'react-feather'
 import { useHistory } from 'react-router-dom'
+import { useI18N } from '../../../../utils'
 import type { Persona } from '../../../../database'
-import { useI18N } from '../../../../utils/i18n-next-ui'
 import Services from '../../../service'
-import AbstractTab, { AbstractTabProps } from '../../DashboardComponents/AbstractTab'
+import AbstractTab, { AbstractTabProps } from '../../../../components/shared/AbstractTab'
 import { DebounceButton } from '../../DashboardComponents/ActionButton'
 import { RestoreFromQRCodeCameraBox } from '../../DashboardComponents/RestoreFromQRCodeCameraBox'
 import { RestoreFromQRCodeImageBox } from '../../DashboardComponents/RestoreFromQRCodeImageBox'
@@ -90,14 +90,15 @@ export function DashboardImportPersonaDialog(props: WrappedDialogProps) {
                 label: 'Base64',
                 children: (
                     <TextField
-                        inputProps={{ style: { height: 147 } }}
                         multiline
-                        minRows={1}
+                        minRows={5}
+                        maxRows={5}
                         autoFocus
                         placeholder={t('dashboard_paste_database_base64_hint')}
                         onChange={(e) => setBase64Value(e.target.value)}
                         value={base64Value}
-                        variant="outlined"></TextField>
+                        variant="outlined"
+                    />
                 ),
                 sx: { p: 0, display: 'flex' },
             },
@@ -142,7 +143,7 @@ export function DashboardImportPersonaDialog(props: WrappedDialogProps) {
                 iconColor="#5FDD97"
                 primary={t('import_your_persona')}
                 secondary={t('dashboard_persona_import_dialog_hint')}
-                content={<AbstractTab {...tabProps}></AbstractTab>}
+                content={<AbstractTab {...tabProps} />}
                 footer={
                     <DebounceButton
                         variant="contained"
@@ -169,7 +170,8 @@ export function DashboardImportPersonaDialog(props: WrappedDialogProps) {
                         data-testid="import_button">
                         {t('import')}
                     </DebounceButton>
-                }></DashboardDialogWrapper>
+                }
+            />
         </DashboardDialogCore>
     )
 }

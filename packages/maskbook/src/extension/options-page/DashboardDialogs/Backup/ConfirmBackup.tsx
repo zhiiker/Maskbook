@@ -1,19 +1,18 @@
-import { Box, createStyles, makeStyles, Theme } from '@material-ui/core'
+import { Box, makeStyles, Theme } from '@material-ui/core'
 import { green } from '@material-ui/core/colors'
 import classNames from 'classnames'
-import { useSnackbar } from 'notistack'
+import { useSnackbar } from '@masknet/theme'
 import { useState } from 'react'
 import { Database as DatabaseIcon } from 'react-feather'
-import { useI18N } from '../../../../utils/i18n-next-ui'
-import type { BackupJSONFileLatest } from '../../../../utils/type-transform/BackupFormat/JSON/latest'
+import { useI18N, BackupJSONFileLatest } from '../../../../utils'
 import Services from '../../../service'
 import ActionButton from '../../DashboardComponents/ActionButton'
 import { DatabasePreviewCard, DatabaseRecordType } from '../../DashboardComponents/DatabasePreviewCard'
 import { DashboardDialogWrapper } from '../Base'
 import { useDatabaseStyles } from './style'
 
-const useConfirmBackupStyles = makeStyles((theme: Theme) =>
-    createStyles<string, { imported: boolean }>({
+const useConfirmBackupStyles = makeStyles<Theme, { imported: boolean }, 'dashboardPreviewCardTable' | 'doneButton'>(
+    (theme) => ({
         dashboardPreviewCardTable: {
             // keep dialogs vertical align when switching between them
             marginTop: (props) => (props.imported ? 2 : 26),
@@ -99,7 +98,8 @@ export function ConfirmBackup({ restoreId, date, backup, onDone }: ConfirmBackup
                                 confirmBackupClasses.dashboardPreviewCardTable,
                             ),
                         }}
-                        records={records}></DatabasePreviewCard>
+                        records={records}
+                    />
                     {imported === true ? (
                         <ActionButton className={confirmBackupClasses.doneButton} variant="contained" onClick={onDone}>
                             {t('set_up_button_done')}

@@ -1,39 +1,39 @@
-import { Button, createStyles, makeStyles, TextField } from '@material-ui/core'
+import { Button, makeStyles, TextField } from '@material-ui/core'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { EthereumAddress } from 'wallet.ts'
+import {
+    ERC1155TokenAssetDetailed,
+    ERC721TokenAssetDetailed,
+    formatEthereumAddress,
+    TransactionStateType,
+    useTokenTransferCallback,
+} from '@masknet/web3-shared'
+import { useI18N } from '../../../../utils'
+import { useRemoteControlledDialog } from '@masknet/shared'
 import { Image } from '../../../../components/shared/Image'
-import { EthereumMessages } from '../../../../plugins/Ethereum/messages'
-import { formatEthereumAddress } from '../../../../plugins/Wallet/formatter'
+import { WalletMessages } from '../../../../plugins/Wallet/messages'
 import { MaskbookIconOutlined } from '../../../../resources/MaskbookIcon'
-import { useRemoteControlledDialog } from '../../../../utils/hooks/useRemoteControlledDialog'
-import { useI18N } from '../../../../utils/i18n-next-ui'
-import { useTokenTransferCallback } from '../../../../web3/hooks/useTokenTransferCallback'
-import { TransactionStateType } from '../../../../web3/hooks/useTransactionState'
-import type { ERC1155TokenAssetDetailed, ERC721TokenAssetDetailed } from '../../../../web3/types'
 import { CollectibleContext } from '../../DashboardComponents/CollectibleList'
 import { DashboardDialogCore, DashboardDialogWrapper, WrappedDialogProps } from '../Base'
-import type { WalletProps } from './types'
 
-const useTransferDialogStylesNFT = makeStyles((theme) =>
-    createStyles({
-        root: {
-            padding: theme.spacing(1),
-        },
-        button: {
-            marginTop: theme.spacing(3),
-        },
-        placeholder: {
-            width: 48,
-            height: 48,
-            opacity: 0.1,
-        },
-    }),
-)
+const useTransferDialogStylesNFT = makeStyles((theme) => ({
+    root: {
+        padding: theme.spacing(1),
+    },
+    button: {
+        marginTop: theme.spacing(3),
+    },
+    placeholder: {
+        width: 48,
+        height: 48,
+        opacity: 0.1,
+    },
+}))
 
 export function DashboardWalletTransferDialogNFT(
-    props: WrappedDialogProps<WalletProps & { token: ERC721TokenAssetDetailed | ERC1155TokenAssetDetailed }>,
+    props: WrappedDialogProps<{ token: ERC721TokenAssetDetailed | ERC1155TokenAssetDetailed }>,
 ) {
-    const { wallet, token } = props.ComponentProps!
+    const { token } = props.ComponentProps!
     const { onClose } = props
 
     const { t } = useI18N()
@@ -56,8 +56,8 @@ export function DashboardWalletTransferDialogNFT(
     //#endregion
 
     //#region remote controlled transaction dialog
-    const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
-        EthereumMessages.events.transactionDialogUpdated,
+    const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
+        WalletMessages.events.transactionDialogUpdated,
         useCallback(
             (ev) => {
                 if (ev.open) return
@@ -73,7 +73,7 @@ export function DashboardWalletTransferDialogNFT(
     // open the transaction dialog
     useEffect(() => {
         if (transferState.type === TransactionStateType.UNKNOWN) return
-        setTransactionDialogOpen({
+        setTransactionDialog({
             open: true,
             state: transferState,
             summary: `Transfer ${token.name} to ${formatEthereumAddress(address, 4)}.`,

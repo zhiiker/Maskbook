@@ -1,22 +1,22 @@
-/// <reference types="react/experimental" />
-/// <reference types="react-dom/experimental" />
+import type {} from 'react/next'
+import type {} from 'react-dom/next'
+import ReactDOM from 'react-dom'
+
 // @ts-ignore in case circle dependency make typescript complains
-import { Dashboard, setService, setPluginMessages, setMessages, setPluginServices } from '@dimensiondev/dashboard'
+import { IntergratedDashboard } from '@masknet/dashboard'
+// @ts-ignore
+import { setService, setPluginMessages, setMessages, setPluginServices } from '@masknet/dashboard'
 import Services from '../service'
 import { WalletRPC, WalletMessages } from '../../plugins/Wallet/messages'
 import { MaskMessage } from '../../utils/messages'
+import { startPluginDashboard } from '@masknet/plugin-infra'
+import { createPluginHost } from '../../plugin-infra/host'
 setService(Services)
 setMessages(MaskMessage)
 setPluginServices({ Wallet: WalletRPC })
 setPluginMessages({ Wallet: WalletMessages })
-
-import ReactDOM from 'react-dom'
-import { StylesProvider } from '@material-ui/core/styles'
+startPluginDashboard(createPluginHost())
 
 const root = document.createElement('div')
 document.body.insertBefore(root, document.body.children[0])
-ReactDOM.unstable_createRoot(root).render(
-    <StylesProvider injectFirst>
-        <Dashboard />
-    </StylesProvider>,
-)
+ReactDOM.createRoot(root).render(<IntergratedDashboard />)

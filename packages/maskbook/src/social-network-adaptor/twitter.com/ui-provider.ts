@@ -1,5 +1,6 @@
-import { stateCreator, SocialNetworkUI, globalUIState } from '../../social-network'
+import { globalUIState, SocialNetworkUI, stateCreator } from '../../social-network'
 import { twitterBase } from './base'
+import getSearchedKeywordAtTwitter from './collecting/getSearchedKeyword'
 import { twitterShared } from './shared'
 import { InitAutonomousStateFriends } from '../../social-network/defaults/state/InitFriends'
 import { InitAutonomousStateProfiles } from '../../social-network/defaults/state/InitProfiles'
@@ -30,7 +31,7 @@ import { pasteImageToCompositionDefault } from '../../social-network/defaults/au
 import { currentSelectedIdentity } from '../../settings/settings'
 import { injectPostInspectorAtTwitter } from './injection/PostInspector'
 import { ProfileIdentifier } from '../../database/type'
-import { unreachable } from '../../utils/utils'
+import { unreachable } from '@dimensiondev/kit'
 
 const twitterUI: SocialNetworkUI.Definition = {
     ...twitterBase,
@@ -56,6 +57,7 @@ const twitterUI: SocialNetworkUI.Definition = {
         identityProvider: IdentityProviderTwitter,
         postsProvider: PostProviderTwitter,
         profilesCollector: profilesCollectorTwitter,
+        getSearchedKeyword: getSearchedKeywordAtTwitter,
     },
     customization: {
         paletteMode: PaletteModeProviderTwitter,

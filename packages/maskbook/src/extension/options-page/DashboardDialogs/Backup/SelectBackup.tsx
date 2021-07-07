@@ -1,43 +1,44 @@
-import { Box, createStyles, InputBase, makeStyles, Theme } from '@material-ui/core'
+import { Box, InputBase, makeStyles, Theme } from '@material-ui/core'
 import classNames from 'classnames'
-import { useSnackbar } from 'notistack'
+import { useSnackbar } from '@masknet/theme'
 import { useState } from 'react'
 import { Database as DatabaseIcon } from 'react-feather'
 import { useAsync } from 'react-use'
 import { v4 as uuid } from 'uuid'
-import { useI18N } from '../../../../utils/i18n-next-ui'
-import { extraPermissions } from '../../../../utils/permissions'
-import { decompressBackupFile } from '../../../../utils/type-transform/BackupFileShortRepresentation'
-import { BackupJSONFileLatest, UpgradeBackupJSONFile } from '../../../../utils/type-transform/BackupFormat/JSON/latest'
+import {
+    useI18N,
+    extraPermissions,
+    decompressBackupFile,
+    BackupJSONFileLatest,
+    UpgradeBackupJSONFile,
+} from '../../../../utils'
 import Services from '../../../service'
-import AbstractTab, { AbstractTabProps } from '../../DashboardComponents/AbstractTab'
+import AbstractTab, { AbstractTabProps } from '../../../../components/shared/AbstractTab'
 import ActionButton from '../../DashboardComponents/ActionButton'
 import { RestoreFromBackupBox } from '../../DashboardComponents/RestoreFromBackupBox'
 import { DashboardDialogWrapper } from '../Base'
 import { useDatabaseStyles } from './style'
 
-const useSelectBackupStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            marginTop: theme.spacing(-3),
+const useSelectBackupStyles = makeStyles((theme: Theme) => ({
+    root: {
+        marginTop: theme.spacing(-3),
+    },
+    input: {
+        width: '100%',
+        boxSizing: 'border-box',
+        border: `solid 1px ${theme.palette.divider}`,
+        borderRadius: 4,
+        height: 176,
+        padding: theme.spacing(2, 3),
+        '& > textarea': {
+            overflow: 'auto !important',
+            height: '100% !important',
         },
-        input: {
-            width: '100%',
-            boxSizing: 'border-box',
-            border: `solid 1px ${theme.palette.divider}`,
-            borderRadius: 4,
-            height: 176,
-            padding: theme.spacing(2, 3),
-            '& > textarea': {
-                overflow: 'auto !important',
-                height: '100% !important',
-            },
-        },
-        button: {
-            marginTop: theme.spacing(3),
-        },
-    }),
-)
+    },
+    button: {
+        marginTop: theme.spacing(3),
+    },
+}))
 
 interface SelectBackupProps {
     onConfirm?: (uuid: string, data: BackupJSONFileLatest) => void
@@ -137,7 +138,7 @@ export function SelectBackup({ onConfirm }: SelectBackupProps) {
                             display: 'flex',
                             flexDirection: 'column',
                         }}>
-                        <AbstractTab {...tabProps}></AbstractTab>
+                        <AbstractTab {...tabProps} />
                     </Box>
                     <ActionButton
                         className={selectBackupClasses.button}

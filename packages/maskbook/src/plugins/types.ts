@@ -1,4 +1,4 @@
-import type { TypedMessage, TypedMessageCompound } from '../protocols/typed-message'
+import type { TypedMessage } from '../protocols/typed-message'
 import type { PostInfo } from '../social-network/PostInfo'
 
 type PluginInjectFunction<T> =
@@ -26,11 +26,9 @@ export interface PostDialogEntry {
 
 export type BadgeConvertor<T = any> = (metadata: T) => string | React.ReactNode
 
-export type MessageProcessor = (message: TypedMessageCompound) => TypedMessageCompound
-
 export interface PluginConfig {
     id: string
-    pluginIcon: string
+    pluginIcon: React.ReactNode
     pluginName: string
     pluginDescription: string
     identifier: string
@@ -43,5 +41,4 @@ export interface PluginConfig {
     DashboardComponent?: React.ComponentType<{}>
     postDialogMetadataBadge?: Map<string, BadgeConvertor>
     postDialogEntries?: PostDialogEntry[]
-    messageProcessor?: MessageProcessor
 }

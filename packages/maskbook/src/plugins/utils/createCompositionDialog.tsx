@@ -1,5 +1,5 @@
 import { ValueRef } from '@dimensiondev/holoflows-kit'
-import { useValueRef } from '../../utils/hooks/useValueRef'
+import { useValueRef } from '@masknet/shared'
 import type { PluginConfig } from '../types'
 
 export function createCompositionDialog(
@@ -20,7 +20,7 @@ export function createCompositionDialog(
         },
         () => {
             const opening = useValueRef(open)
-            return <DialogComponent open={opening} onClose={() => (open.value = false)}></DialogComponent>
+            return <DialogComponent open={opening} onClose={() => (open.value = false)} />
         },
     ]
 }

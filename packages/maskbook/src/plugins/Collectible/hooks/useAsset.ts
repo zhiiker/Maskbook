@@ -1,25 +1,27 @@
-import { useAsyncRetry } from 'react-use'
-import { head, uniqBy } from 'lodash-es'
+import { unreachable } from '@dimensiondev/kit'
+import {
+    currySameAddress,
+    EthereumTokenType,
+    FungibleTokenDetailed,
+    isSameAddress,
+    useAccount,
+    useChainId,
+    useTokenConstants,
+} from '@masknet/web3-shared'
 import BigNumber from 'bignumber.js'
-import { useChainId } from '../../../web3/hooks/useBlockNumber'
-import { PluginCollectibleRPC } from '../messages'
-import type { CollectibleToken } from '../types'
-import { CollectibleProvider } from '../types'
-import { getOrderUnitPrice } from '../utils'
-import { unreachable } from '../../../utils/utils'
-import { toDate, toRaribleImage, toTokenDetailed, toTokenIdentifier } from '../helpers'
+import { head, uniqBy } from 'lodash-es'
+import { useAsyncRetry } from 'react-use'
 import { OpenSeaAccountURL } from '../constants'
+import { toDate, toRaribleImage, toTokenDetailed, toTokenIdentifier } from '../helpers'
+import { PluginCollectibleRPC } from '../messages'
 import { resolveRaribleUserNetwork } from '../pipes'
-import { ERC20TokenDetailed, EthereumTokenType, EtherTokenDetailed } from '../../../web3/types'
-import { useAccount } from '../../../web3/hooks/useAccount'
-import { isSameAddress } from '../../../web3/helpers'
-import { useConstant } from '../../../web3/hooks/useConstant'
-import { CONSTANTS } from '../../../web3/constants'
+import { CollectibleProvider, CollectibleToken } from '../types'
+import { getOrderUnitPrice } from '../utils'
 
 export function useAsset(provider: CollectibleProvider, token?: CollectibleToken) {
     const account = useAccount()
     const chainId = useChainId()
-    const WETH_ADDRESS = useConstant(CONSTANTS, 'WETH_ADDRESS')
+    const { WETH_ADDRESS } = useTokenConstants()
 
     return useAsyncRetry(async () => {
         if (!token) return
@@ -38,10 +40,8 @@ export function useAsset(provider: CollectibleProvider, token?: CollectibleToken
                         openSeaResponse.collection?.safelist_request_status ?? '',
                     ),
                     is_order_weth: isSameAddress(desktopOrder?.paymentToken ?? '', WETH_ADDRESS),
-                    is_collection_weth: openSeaResponse.collection.payment_tokens.some((x) =>
-                        isSameAddress(x.address, WETH_ADDRESS),
-                    ),
-                    is_owner: isSameAddress(openSeaResponse.owner.address, account),
+                    is_collection_weth: openSeaResponse.collection.payment_tokens.some(currySameAddress(WETH_ADDRESS)),
+                    is_owner: openSeaResponse.top_ownerships.some((item) => isSameAddress(item.owner.address, account)),
                     // it's an IOS string as my inspection
                     is_auction: Date.parse(`${openSeaResponse.endTime ?? ''}Z`) > Date.now(),
                     image_url: openSeaResponse.imageUrl,
@@ -69,7 +69,7 @@ export function useAsset(provider: CollectibleProvider, token?: CollectibleToken
                     collection_name: openSeaResponse.collection.name,
                     animation_url: openSeaResponse.animation_url,
                     end_time: desktopOrder
-                        ? toDate(Number.parseInt((desktopOrder.listingTime as unknown) as string))
+                        ? toDate(Number.parseInt(desktopOrder.listingTime as unknown as string))
                         : null,
                     order_payment_tokens: desktopOrder?.paymentTokenContract
                         ? [toTokenDetailed(chainId, desktopOrder.paymentTokenContract)]
@@ -79,6 +79,7 @@ export function useAsset(provider: CollectibleProvider, token?: CollectibleToken
                         (x) => x.address.toLowerCase(),
                     ).filter((x) => x.type === EthereumTokenType.ERC20),
                     order_: desktopOrder,
+                    slug: openSeaResponse.collection.slug,
                     response_: openSeaResponse,
                 }
             case CollectibleProvider.RARIBLE:
@@ -89,7 +90,8 @@ export function useAsset(provider: CollectibleProvider, token?: CollectibleToken
                     is_verified: false,
                     is_owner: false,
                     is_auction: false,
-                    image_url: toRaribleImage(raribleResponse.properties.image),
+                    image_url:
+                        raribleResponse.properties.imagePreview ?? toRaribleImage(raribleResponse.properties.image),
                     asset_contract: {
                         ...raribleResponse.assetContract,
                         schemaName: raribleResponse.assetContract.standard,
@@ -119,9 +121,10 @@ export function useAsset(provider: CollectibleProvider, token?: CollectibleToken
                     current_price: raribleResponse.item.offer?.buyPriceEth,
                     current_symbol: 'ETH',
                     end_time: null,
-                    order_payment_tokens: [] as (EtherTokenDetailed | ERC20TokenDetailed)[],
-                    offer_payment_tokens: [] as (EtherTokenDetailed | ERC20TokenDetailed)[],
+                    order_payment_tokens: [] as FungibleTokenDetailed[],
+                    offer_payment_tokens: [] as FungibleTokenDetailed[],
                     order_: null,
+                    slug: raribleResponse.assetContract.shortUrl,
                     response_: raribleResponse,
                 }
             default:

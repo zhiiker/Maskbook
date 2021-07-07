@@ -1,24 +1,18 @@
-import { useCallback, ChangeEvent, useMemo } from 'react'
-import {
-    makeStyles,
-    createStyles,
-    TextField,
-    Typography,
-    Box,
-    Chip,
-    InputProps,
-    ChipProps,
-    TextFieldProps,
-} from '@material-ui/core'
+import { ChangeEvent, useCallback, useMemo } from 'react'
+import { Box, Chip, ChipProps, InputProps, makeStyles, TextField, TextFieldProps, Typography } from '@material-ui/core'
 import classNames from 'classnames'
 import { SelectTokenChip, SelectTokenChipProps } from './SelectTokenChip'
-import { formatBalance } from '../../plugins/Wallet/formatter'
-import { MIN_AMOUNT_LENGTH, MAX_AMOUNT_LENGTH } from '../constants'
+import { FormattedBalance } from '@masknet/shared'
+import type { FungibleTokenDetailed } from '@masknet/web3-shared'
+import { formatBalance } from '@masknet/web3-shared'
 import { useStylesExtends } from '../../components/custom-ui-helper'
-import type { EtherTokenDetailed, ERC20TokenDetailed } from '../types'
+import { useI18N } from '../../utils'
+
+const MIN_AMOUNT_LENGTH = 1
+const MAX_AMOUNT_LENGTH = 79
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {},
         input: {
             '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
@@ -48,7 +42,7 @@ const useStyles = makeStyles((theme) => {
         inputShrinkLabel: {
             transform: 'translate(17px, -3px) scale(0.75) !important',
         },
-    })
+    }
 })
 
 export interface TokenAmountPanelProps extends withClasses<'root'> {
@@ -58,7 +52,7 @@ export interface TokenAmountPanelProps extends withClasses<'root'> {
     disableToken?: boolean
     disableBalance?: boolean
     label: string
-    token?: EtherTokenDetailed | ERC20TokenDetailed | null
+    token?: FungibleTokenDetailed | null
     onAmountChange: (amount: string) => void
     InputProps?: Partial<InputProps>
     MaxChipProps?: Partial<ChipProps>
@@ -79,7 +73,7 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
         disableBalance = false,
         MaxChipProps,
     } = props
-
+    const { t } = useI18N()
     const classes = useStylesExtends(useStyles(), props)
 
     //#region update amount by self
@@ -108,6 +102,7 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
             value={amount}
             variant="outlined"
             onChange={onChange}
+            placeholder="0.0"
             InputProps={{
                 inputProps: {
                     autoComplete: 'off',
@@ -118,7 +113,6 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
                     minLength: MIN_AMOUNT_LENGTH,
                     maxLength: MAX_AMOUNT_LENGTH,
                     pattern: '^[0-9]*[.,]?[0-9]*$',
-                    placeholder: '0.0',
                     spellCheck: false,
                     className: classes.input,
                 },
@@ -137,7 +131,8 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
                                 color="textSecondary"
                                 variant="body2"
                                 component="span">
-                                Balance: {formatBalance(balance, token.decimals, 6)}
+                                {t('plugin_ito_list_table_got')}:
+                                <FormattedBalance value={balance} decimals={token.decimals} significant={6} />
                             </Typography>
                         ) : null}
                         <Box

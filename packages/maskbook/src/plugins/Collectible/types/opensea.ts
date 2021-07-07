@@ -15,6 +15,7 @@ export interface OpenSeaCustomAccount extends OpenSeaAccount {
 export interface OpenSeaCustomCollection extends OpenSeaCollection {
     safelist_request_status: string
     payment_tokens: OpenSeaFungibleToken[]
+    slug: string
 }
 
 export interface OpenSeaResponse extends OpenSeaAsset {
@@ -24,6 +25,10 @@ export interface OpenSeaResponse extends OpenSeaAsset {
     creator?: OpenSeaCustomAccount
     traits: OpenSeaCustomTrait[]
     endTime?: string
+    top_ownerships: {
+        owner: OpenSeaCustomAccount
+        quantity: string
+    }[]
 }
 
 export interface OpenSeaAssetEventAccount {

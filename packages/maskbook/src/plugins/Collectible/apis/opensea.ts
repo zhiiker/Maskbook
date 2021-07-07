@@ -1,16 +1,15 @@
+import { head } from 'lodash-es'
 import { OpenSeaPort } from 'opensea-js'
 import type { OrderSide } from 'opensea-js/lib/types'
 import stringify from 'json-stable-stringify'
-import { getChainId } from '../../../extension/background-script/EthereumService'
+import { ChainId, getChainName } from '@masknet/web3-shared'
+import { request, requestSend } from '../../../extension/background-script/EthereumService'
 import { resolveOpenSeaNetwork } from '../pipes'
 import { OpenSeaAPI_Key, OpenSeaBaseURL, OpenSeaRinkebyBaseURL, OpenSeaGraphQLURL, ReferrerAddress } from '../constants'
 import { Flags } from '../../../utils/flags'
 import type { OpenSeaAssetEventResponse, OpenSeaResponse } from '../types'
 import { OpenSeaEventHistoryQuery } from '../queries/OpenSea'
-import { send } from '../../../extension/background-script/EthereumServices/send'
-import { ChainId } from '../../../web3/types'
-import { resolveChainName } from '../../../web3/pipes'
-import { head } from 'lodash-es'
+import { currentChainIdSettings } from '../../Wallet/settings'
 
 function createExternalProvider() {
     return {
@@ -18,16 +17,14 @@ function createExternalProvider() {
         isStatus: true,
         host: '',
         path: '',
-        sendAsync: send,
-        send,
-        request() {
-            throw new Error('The request method is not implemented.')
-        },
+        sendAsync: requestSend,
+        send: requestSend,
+        request,
     }
 }
 
 async function createOpenSeaPort() {
-    const chainId = await getChainId()
+    const chainId = currentChainIdSettings.value
     return new OpenSeaPort(
         createExternalProvider(),
         {
@@ -39,9 +36,9 @@ async function createOpenSeaPort() {
 }
 
 async function createOpenSeaAPI() {
-    const chainId = await getChainId()
+    const chainId = currentChainIdSettings.value
     if (![ChainId.Mainnet, ChainId.Rinkeby].includes(chainId))
-        throw new Error(`${resolveChainName(chainId)} is not supported.`)
+        throw new Error(`${getChainName(chainId)} is not supported.`)
     return chainId === ChainId.Mainnet ? OpenSeaBaseURL : OpenSeaRinkebyBaseURL
 }
 

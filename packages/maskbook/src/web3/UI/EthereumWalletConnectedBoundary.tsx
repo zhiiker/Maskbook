@@ -1,27 +1,20 @@
-import { createStyles, Grid, makeStyles } from '@material-ui/core'
+import { Grid, makeStyles } from '@material-ui/core'
 import classNames from 'classnames'
-import BigNumber from 'bignumber.js'
 import { useCallback } from 'react'
+import { useValueRef, useRemoteControlledDialog } from '@masknet/shared'
 import ActionButton from '../../extension/options-page/DashboardComponents/ActionButton'
 import Services from '../../extension/service'
 import { WalletMessages } from '../../plugins/Wallet/messages'
-import { currentIsMetamaskLockedSettings, currentSelectedWalletProviderSettings } from '../../plugins/Wallet/settings'
-import { useRemoteControlledDialog } from '../../utils/hooks/useRemoteControlledDialog'
-import { useValueRef } from '../../utils/hooks/useValueRef'
-import { useI18N } from '../../utils/i18n-next-ui'
-import { useAccount } from '../hooks/useAccount'
-import { useChainIdValid } from '../hooks/useBlockNumber'
-import { useEtherTokenBalance } from '../hooks/useEtherTokenBalance'
-import { ProviderType } from '../types'
+import { currentIsMetamaskLockedSettings, currentProviderSettings } from '../../plugins/Wallet/settings'
+import { useI18N } from '../../utils'
+import { isZero, ProviderType, useAccount, useChainIdValid, useNativeTokenBalance } from '@masknet/web3-shared'
 import { useStylesExtends } from '../../components/custom-ui-helper'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        button: {
-            marginTop: theme.spacing(1.5),
-        },
-    }),
-)
+const useStyles = makeStyles((theme) => ({
+    button: {
+        marginTop: theme.spacing(1.5),
+    },
+}))
 
 export interface EthereumWalletConnectedBoundaryProps extends withClasses<'connectWallet' | 'unlockMetaMask'> {
     offChain?: boolean
@@ -36,24 +29,16 @@ export function EthereumWalletConnectedBoundary(props: EthereumWalletConnectedBo
 
     const account = useAccount()
     const chainIdValid = useChainIdValid()
-    const {
-        value: etherBalance = '0',
-        loading: etherBalanceLoading,
-        error: etherBalanceError,
-        retry: retryEtherBalance,
-    } = useEtherTokenBalance(account)
+    const nativeTokenBalance = useNativeTokenBalance()
 
     //#region remote controlled select provider dialog
-    const [, setSelectProviderDialogOpen] = useRemoteControlledDialog(WalletMessages.events.selectProviderDialogUpdated)
-    const onConnect = useCallback(() => {
-        setSelectProviderDialogOpen({
-            open: true,
-        })
-    }, [setSelectProviderDialogOpen])
+    const { openDialog: openSelectProviderDialog } = useRemoteControlledDialog(
+        WalletMessages.events.selectProviderDialogUpdated,
+    )
     //#endregion
 
     //#region metamask
-    const currentSelectedWalletProvider = useValueRef(currentSelectedWalletProviderSettings)
+    const providerType = useValueRef(currentProviderSettings)
     const currentIsMetamaskLocked = useValueRef(currentIsMetamaskLockedSettings)
     const onConnectMetaMask = useCallback(async () => {
         await Services.Ethereum.connectMetaMask()
@@ -68,13 +53,13 @@ export function EthereumWalletConnectedBoundary(props: EthereumWalletConnectedBo
                     fullWidth
                     variant="contained"
                     size="large"
-                    onClick={onConnect}>
+                    onClick={openSelectProviderDialog}>
                     {t('plugin_wallet_connect_a_wallet')}
                 </ActionButton>
             </Grid>
         )
 
-    if (currentSelectedWalletProvider === ProviderType.MetaMask && currentIsMetamaskLocked)
+    if (providerType === ProviderType.MetaMask && currentIsMetamaskLocked)
         return (
             <Grid container>
                 <ActionButton
@@ -88,17 +73,17 @@ export function EthereumWalletConnectedBoundary(props: EthereumWalletConnectedBo
             </Grid>
         )
 
-    if (new BigNumber(etherBalance).isZero() && !offChain)
+    if (isZero(nativeTokenBalance.value ?? '0') && !offChain)
         return (
             <Grid container>
                 <ActionButton
                     className={classes.button}
-                    disabled={!etherBalanceError}
+                    disabled={!nativeTokenBalance.error}
                     fullWidth
                     variant="contained"
                     size="large"
-                    onClick={retryEtherBalance}>
-                    {t('plugin_wallet_no_gas_fee')}
+                    onClick={nativeTokenBalance.retry}>
+                    {t(nativeTokenBalance.loading ? 'plugin_wallet_update_gas_fee' : 'plugin_wallet_no_gas_fee')}
                 </ActionButton>
             </Grid>
         )

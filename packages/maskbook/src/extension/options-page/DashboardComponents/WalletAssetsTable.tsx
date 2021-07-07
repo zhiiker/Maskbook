@@ -4,7 +4,6 @@ import {
     Button,
     Chip,
     IconButton,
-    createStyles,
     makeStyles,
     Skeleton,
     Table,
@@ -20,68 +19,74 @@ import BigNumber from 'bignumber.js'
 import classNames from 'classnames'
 import ExpandLessIcon from '@material-ui/icons/ExpandLess'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import type { Asset } from '@masknet/web3-shared'
+import {
+    CurrencyType,
+    currySameAddress,
+    EthereumTokenType,
+    formatBalance,
+    formatCurrency,
+    getChainIdFromName,
+    isGreaterThan,
+    useAssets,
+    useChainDetailed,
+    useStableTokensDebank,
+    Wallet,
+} from '@masknet/web3-shared'
 import { useStylesExtends } from '../../../components/custom-ui-helper'
-import { formatBalance, formatCurrency } from '../../../plugins/Wallet/formatter'
-import { useI18N } from '../../../utils/i18n-next-ui'
-import { CurrencyType, ERC20TokenDetailed, EthereumTokenType } from '../../../web3/types'
-import { isSameAddress } from '../../../web3/helpers'
-import { TokenIcon } from './TokenIcon'
-import type { WalletRecord } from '../../../plugins/Wallet/database/types'
+import { FormattedCurrency, TokenIcon } from '@masknet/shared'
+import { useI18N, useMatchXS } from '../../../utils'
 import { ActionsBarFT } from './ActionsBarFT'
 import { useTrustedERC20TokensFromDB } from '../../../plugins/Wallet/hooks/useERC20Tokens'
-import { useStableTokensDebank } from '../../../web3/hooks/useStableTokensDebank'
-import type { Asset } from '../../../plugins/Wallet/types'
 import { getTokenUSDValue } from '../../../plugins/Wallet/helpers'
-import { useAssets } from '../../../plugins/Wallet/hooks/useAssets'
-import { useMatchXS } from '../../../utils/hooks/useMatchXS'
 
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles<string, { isMobile: boolean }>({
-        container: {
-            '&::-webkit-scrollbar': {
-                display: 'none',
-            },
-            padding: theme.spacing(0),
+const useStyles = makeStyles<
+    Theme,
+    { isMobile: boolean },
+    'container' | 'head' | 'cell' | 'record' | 'coin' | 'name' | 'chain' | 'price' | 'more' | 'lessButton'
+>((theme) => ({
+    container: {
+        '&::-webkit-scrollbar': {
+            display: 'none',
         },
-        table: {},
-        head: {
-            backgroundColor: theme.palette.mode === 'light' ? theme.palette.common.white : 'var(--drawerBody)',
-        },
-        cell: {
-            paddingLeft: ({ isMobile }) => (isMobile ? theme.spacing(0.5) : theme.spacing(2)),
-            paddingRight: ({ isMobile }) => (isMobile ? theme.spacing(0.5) : theme.spacing(1.5)),
-            fontSize: ({ isMobile }) => (isMobile ? '0.8rem' : '0.875rem'),
-            whiteSpace: 'nowrap',
-        },
-        record: {
-            display: 'flex',
-        },
-        coin: {
-            width: ({ isMobile }) => (isMobile ? 20 : 24),
-            height: ({ isMobile }) => (isMobile ? 20 : 24),
-        },
-        name: {
-            marginLeft: theme.spacing(1),
-            fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
-        },
-        chain: {
-            marginLeft: theme.spacing(1),
-        },
-        price: {
-            fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
-        },
-        more: {
-            color: theme.palette.text.primary,
-            fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
-        },
-        lessButton: {
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: theme.spacing(1),
-        },
-        menuAnchorElRef: {},
-    }),
-)
+        padding: theme.spacing(0),
+    },
+    head: {
+        backgroundColor: theme.palette.mode === 'light' ? theme.palette.common.white : 'var(--drawerBody)',
+    },
+    cell: {
+        paddingLeft: ({ isMobile }) => (isMobile ? theme.spacing(0.5) : theme.spacing(2)),
+        paddingRight: ({ isMobile }) => (isMobile ? theme.spacing(0.5) : theme.spacing(1.5)),
+        fontSize: ({ isMobile }) => (isMobile ? '0.8rem' : '0.875rem'),
+        whiteSpace: 'nowrap',
+    },
+    record: {
+        display: 'flex',
+    },
+    coin: {
+        width: ({ isMobile }) => (isMobile ? 20 : 24),
+        height: ({ isMobile }) => (isMobile ? 20 : 24),
+    },
+    name: {
+        marginLeft: theme.spacing(1),
+        fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
+    },
+    chain: {
+        marginLeft: theme.spacing(1),
+    },
+    price: {
+        fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
+    },
+    more: {
+        color: theme.palette.text.primary,
+        fontSize: ({ isMobile }) => (isMobile ? '0.9rem' : '1rem'),
+    },
+    lessButton: {
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: theme.spacing(1),
+    },
+}))
 
 //#region view detailed
 interface ViewDetailedProps extends WalletAssetsTableProps {
@@ -93,9 +98,11 @@ function ViewDetailed(props: ViewDetailedProps) {
 
     const isMobile = useMatchXS()
     const classes = useStylesExtends(useStyles({ isMobile }), props)
-    const stableTokens = useStableTokensDebank()
 
-    console.log(asset)
+    const stableTokens = useStableTokensDebank()
+    const chainDetailed = useChainDetailed()
+
+    if (!chainDetailed) return null
 
     return (
         <TableRow className={classes.cell} key={asset.token.address}>
@@ -104,9 +111,16 @@ function ViewDetailed(props: ViewDetailedProps) {
                     sx={{
                         display: 'flex',
                     }}>
-                    <TokenIcon classes={{ icon: classes.coin }} name={asset.token.name} address={asset.token.address} />
+                    <TokenIcon
+                        classes={{ icon: classes.coin }}
+                        name={asset.token.name}
+                        address={asset.token.address}
+                        chainId={getChainIdFromName(asset.chain)}
+                    />
                     <Typography className={classes.name}>{asset.token.symbol}</Typography>
-                    {asset.chain !== 'eth' ? <Chip className={classes.chain} label={asset.chain} size="small" /> : null}
+                    {asset.chain !== chainDetailed.shortName.toLowerCase() ? (
+                        <Chip className={classes.chain} label={asset.chain} size="small" />
+                    ) : null}
                 </Box>,
                 <Box
                     sx={{
@@ -126,9 +140,7 @@ function ViewDetailed(props: ViewDetailedProps) {
                     }}>
                     <Typography className={classes.name} color="textPrimary" component="span">
                         {new BigNumber(formatBalance(asset.balance, asset.token.decimals)).toFixed(
-                            stableTokens.some((y: ERC20TokenDetailed) => isSameAddress(y.address, asset.token.address))
-                                ? 2
-                                : 6,
+                            stableTokens.some(currySameAddress(asset.token.address)) ? 2 : 6,
                         )}
                     </Typography>
                 </Box>,
@@ -138,7 +150,7 @@ function ViewDetailed(props: ViewDetailedProps) {
                         justifyContent: 'flex-end',
                     }}>
                     <Typography className={classes.price} color="textPrimary" component="span">
-                        {formatCurrency(Number(getTokenUSDValue(asset).toFixed(2)), '$')}
+                        <FormattedCurrency value={getTokenUSDValue(asset).toFixed(2)} sign="$" />
                     </Typography>
                 </Box>,
                 ...(isMobile
@@ -168,7 +180,7 @@ function ViewDetailed(props: ViewDetailedProps) {
 const MIN_VALUE = 5
 
 export interface WalletAssetsTableProps extends withClasses<never> {
-    wallet: WalletRecord
+    wallet: Wallet
 }
 
 export function WalletAssetsTable(props: WalletAssetsTableProps) {
@@ -221,14 +233,13 @@ export function WalletAssetsTable(props: WalletAssetsTableProps) {
 
     const viewDetailedTokens = detailedTokens.filter(
         (x) =>
-            new BigNumber(x.value?.[CurrencyType.USD] || '0').isGreaterThan(MIN_VALUE) ||
-            x.token.type === EthereumTokenType.Ether,
+            isGreaterThan(x.value?.[CurrencyType.USD] || '0', MIN_VALUE) || x.token.type === EthereumTokenType.Native,
     )
 
     return (
         <>
             <TableContainer className={classes.container}>
-                <Table className={classes.table} component="table" size="medium" stickyHeader>
+                <Table component="table" size="medium" stickyHeader>
                     <TableHead className={classes.head}>
                         <TableRow>
                             {LABELS.map((x, i) => (
@@ -246,39 +257,19 @@ export function WalletAssetsTable(props: WalletAssetsTableProps) {
                             ? new Array(3).fill(0).map((_, i) => (
                                   <TableRow className={classes.cell} key={i}>
                                       <TableCell>
-                                          <Skeleton
-                                              animation="wave"
-                                              variant="rectangular"
-                                              width="100%"
-                                              height={30}></Skeleton>
+                                          <Skeleton animation="wave" variant="rectangular" width="100%" height={30} />
                                       </TableCell>
                                       <TableCell>
-                                          <Skeleton
-                                              animation="wave"
-                                              variant="rectangular"
-                                              width="100%"
-                                              height={30}></Skeleton>
+                                          <Skeleton animation="wave" variant="rectangular" width="100%" height={30} />
                                       </TableCell>
                                       <TableCell>
-                                          <Skeleton
-                                              animation="wave"
-                                              variant="rectangular"
-                                              width="100%"
-                                              height={30}></Skeleton>
+                                          <Skeleton animation="wave" variant="rectangular" width="100%" height={30} />
                                       </TableCell>
                                       <TableCell>
-                                          <Skeleton
-                                              animation="wave"
-                                              variant="rectangular"
-                                              width="100%"
-                                              height={30}></Skeleton>
+                                          <Skeleton animation="wave" variant="rectangular" width="100%" height={30} />
                                       </TableCell>
                                       <TableCell>
-                                          <Skeleton
-                                              animation="wave"
-                                              variant="rectangular"
-                                              width="100%"
-                                              height={30}></Skeleton>
+                                          <Skeleton animation="wave" variant="rectangular" width="100%" height={30} />
                                       </TableCell>
                                   </TableRow>
                               ))

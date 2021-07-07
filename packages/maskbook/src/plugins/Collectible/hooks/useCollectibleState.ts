@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useUpdateEffect } from 'react-use'
 import { createContainer } from 'unstated-next'
 import { OrderSide } from 'opensea-js/lib/types'
-import { useValueRef } from '../../../utils/hooks/useValueRef'
+import { useValueRef } from '@masknet/shared'
 import { currentCollectibleProviderSettings } from '../settings'
 import { CollectibleTab, CollectibleToken } from '../types'
 import { useAsset } from './useAsset'
@@ -49,17 +49,6 @@ function useCollectibleState(token?: CollectibleToken) {
         }
     }, [events, cursors])
     //#endregion
-
-    if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG: collectible')
-        console.log({
-            provider,
-            asset,
-            orders,
-            offers,
-            events,
-        })
-    }
 
     return {
         token,

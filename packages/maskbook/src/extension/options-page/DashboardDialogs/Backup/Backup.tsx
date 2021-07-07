@@ -1,8 +1,8 @@
 import { Box, Button, Link } from '@material-ui/core'
-import { useSnackbar } from 'notistack'
+import { useSnackbar } from '@masknet/theme'
 import { Database as DatabaseIcon } from 'react-feather'
 import { useAsync } from 'react-use'
-import { useI18N } from '../../../../utils/i18n-next-ui'
+import { useI18N } from '../../../../utils'
 import Services from '../../../service'
 import ActionButton from '../../DashboardComponents/ActionButton'
 import { DatabasePreviewCard, DatabaseRecordType } from '../../DashboardComponents/DatabasePreviewCard'
@@ -84,7 +84,8 @@ export function DashboardBackupDialog(props: WrappedDialogProps) {
                             </ActionButton>
                         )}
                     </Box>
-                }></DashboardDialogWrapper>
+                }
+            />
         </DashboardDialogCore>
     )
 }

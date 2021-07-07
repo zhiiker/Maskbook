@@ -80,7 +80,7 @@ export interface RaribleNFTItemMapResponse {
         name: string
         description: string
         image: string
-        imagePreview: string
+        imagePreview?: string
         imageBig: string
         animationUrl?: string
         attributes: Attribute[]
@@ -121,6 +121,7 @@ export interface RaribleCollectibleResponse {
     tags: Tag[]
     version: number
     description?: string
+    shortUrl: string
 }
 
 export enum RaribleProfileType {

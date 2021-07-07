@@ -1,35 +1,34 @@
 import type { FC } from 'react'
 import classNames from 'classnames'
 import { isNil } from 'lodash-es'
-import { createStyles, Link, makeStyles, TableCell, TableRow, Typography } from '@material-ui/core'
+import { Link, makeStyles, TableCell, TableRow, Typography } from '@material-ui/core'
+import { resolveLinkOnExplorer, ChainId } from '@masknet/web3-shared'
 import { Record } from './Record'
+import { useI18N } from '../../../../utils'
 import type { Transaction } from '../../../../plugins/Wallet/types'
-import { resolveLinkOnEtherscan } from '../../../../web3/pipes'
-import type { ChainId } from '../../../../web3/types'
 
 interface Props {
     chainId: ChainId
     transaction: Transaction
 }
 
-const useStyles = makeStyles(() =>
-    createStyles({
-        failed: { opacity: 0.3 },
-        hidden: { visibility: 'hidden' },
-        overflow: {
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-        },
-        row: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-        },
-    }),
-)
+const useStyles = makeStyles(() => ({
+    failed: { opacity: 0.3 },
+    hidden: { visibility: 'hidden' },
+    overflow: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    },
+    row: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+    },
+}))
 
 export const Row: FC<Props> = ({ transaction, chainId }) => {
     const styles = useStyles()
+    const { t } = useI18N()
     return (
         <TableRow component="div" className={classNames({ [styles.failed]: transaction.failed })}>
             <TableCell component="div">
@@ -53,7 +52,7 @@ export const Row: FC<Props> = ({ transaction, chainId }) => {
                 <Typography
                     className={classNames({ [styles.hidden]: isNil(transaction.gasFee) })}
                     color="textSecondary">
-                    Gas fee
+                    {t('gas_fee')}
                 </Typography>
                 <Typography className={classNames({ [styles.hidden]: isNil(transaction.gasFee) })} variant="body2">
                     {transaction.gasFee?.eth.toFixed(4)} ETH
@@ -76,7 +75,7 @@ interface AddressProps {
 }
 
 const Address: FC<AddressProps> = ({ id, mode, chainId }) => {
-    const href = `${resolveLinkOnEtherscan(chainId)}/${mode}/${id}`
+    const href = `${resolveLinkOnExplorer(chainId)}/${mode}/${id}`
     return id ? (
         <Link target={id} href={href}>
             <span>{id?.slice(0, 5)}</span>

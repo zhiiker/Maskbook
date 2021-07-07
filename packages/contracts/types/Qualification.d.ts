@@ -3,10 +3,17 @@
 /* eslint-disable */
 
 import BN from 'bn.js'
-import { Contract, ContractOptions } from 'web3-eth-contract'
+import { ContractOptions } from 'web3-eth-contract'
 import { EventLog } from 'web3-core'
 import { EventEmitter } from 'events'
-import { ContractEvent, Callback, TransactionObject, BlockType } from './types'
+import {
+    Callback,
+    PayableTransactionObject,
+    NonPayableTransactionObject,
+    BlockType,
+    ContractEventLog,
+    BaseContract,
+} from './types'
 
 interface EventOptions {
     filter?: object
@@ -14,35 +21,74 @@ interface EventOptions {
     topics?: string[]
 }
 
-export class Qualification extends Contract {
-    constructor(jsonInterface: any[], address?: string, options?: ContractOptions)
+export type GasPriceOver = ContractEventLog<{}>
+export type QualificationEvent = ContractEventLog<{
+    account: string
+    qualified: boolean
+    blockNumber: string
+    timestamp: string
+    0: string
+    1: boolean
+    2: string
+    3: string
+}>
+export type Unlucky = ContractEventLog<{}>
+
+export interface Qualification extends BaseContract {
+    constructor(jsonInterface: any[], address?: string, options?: ContractOptions): Qualification
     clone(): Qualification
     methods: {
-        get_creation_time(): TransactionObject<string>
+        get_creation_time(): NonPayableTransactionObject<string>
 
-        get_name(): TransactionObject<string>
+        get_name(): NonPayableTransactionObject<string>
 
-        get_start_time(): TransactionObject<string>
+        get_start_time(): NonPayableTransactionObject<string>
 
-        ifQualified(arg0: string): TransactionObject<boolean>
+        ifQualified(account: string): NonPayableTransactionObject<boolean>
 
-        logQualified(account: string, ito_start_time: number | string): TransactionObject<boolean>
+        isLucky(account: string): NonPayableTransactionObject<boolean>
 
-        set_start_time(_start_time: number | string): TransactionObject<void>
+        logQualified(account: string, ito_start_time: number | string | BN): NonPayableTransactionObject<boolean>
 
-        supportsInterface(interfaceId: string | number[]): TransactionObject<boolean>
+        lucky_factor(): NonPayableTransactionObject<string>
+
+        max_gas_price(): NonPayableTransactionObject<string>
+
+        min_token_amount(): NonPayableTransactionObject<string>
+
+        set_lucky_factor(_lucky_factor: number | string | BN): NonPayableTransactionObject<void>
+
+        set_max_gas_price(_max_gas_price: number | string | BN): NonPayableTransactionObject<void>
+
+        set_min_token_amount(_min_token_amount: number | string | BN): NonPayableTransactionObject<void>
+
+        set_start_time(_start_time: number | string | BN): NonPayableTransactionObject<void>
+
+        set_token_addr(_token_addr: string): NonPayableTransactionObject<void>
+
+        supportsInterface(interfaceId: string | number[]): NonPayableTransactionObject<boolean>
+
+        token_addr(): NonPayableTransactionObject<string>
     }
     events: {
-        Qualification: ContractEvent<{
-            account: string
-            qualified: boolean
-            blockNumber: string
-            timestamp: string
-            0: string
-            1: boolean
-            2: string
-            3: string
-        }>
-        allEvents: (options?: EventOptions, cb?: Callback<EventLog>) => EventEmitter
+        GasPriceOver(cb?: Callback<GasPriceOver>): EventEmitter
+        GasPriceOver(options?: EventOptions, cb?: Callback<GasPriceOver>): EventEmitter
+
+        Qualification(cb?: Callback<QualificationEvent>): EventEmitter
+        Qualification(options?: EventOptions, cb?: Callback<QualificationEvent>): EventEmitter
+
+        Unlucky(cb?: Callback<Unlucky>): EventEmitter
+        Unlucky(options?: EventOptions, cb?: Callback<Unlucky>): EventEmitter
+
+        allEvents(options?: EventOptions, cb?: Callback<EventLog>): EventEmitter
     }
+
+    once(event: 'GasPriceOver', cb: Callback<GasPriceOver>): void
+    once(event: 'GasPriceOver', options: EventOptions, cb: Callback<GasPriceOver>): void
+
+    once(event: 'Qualification', cb: Callback<QualificationEvent>): void
+    once(event: 'Qualification', options: EventOptions, cb: Callback<QualificationEvent>): void
+
+    once(event: 'Unlucky', cb: Callback<Unlucky>): void
+    once(event: 'Unlucky', options: EventOptions, cb: Callback<Unlucky>): void
 }

@@ -2,9 +2,7 @@ import { TextField } from '@material-ui/core'
 import { useState } from 'react'
 import { UserPlus } from 'react-feather'
 import { useHistory } from 'react-router-dom'
-import { WALLET_OR_PERSONA_NAME_MAX_LEN } from '../../../../utils/constants'
-import { useI18N } from '../../../../utils/i18n-next-ui'
-import { checkInputLengthExceed } from '../../../../utils/utils'
+import { WALLET_OR_PERSONA_NAME_MAX_LEN, useI18N, checkInputLengthExceed } from '../../../../utils'
 import Services from '../../../service'
 import { DebounceButton } from '../../DashboardComponents/ActionButton'
 import { DashboardRoute } from '../../Route'
@@ -29,7 +27,7 @@ export function DashboardPersonaCreateDialog(props: WrappedDialogProps) {
                 icon={<UserPlus />}
                 iconColor="#5FDD97"
                 primary={t('create_a_persona')}
-                secondary={' '}
+                secondary=" "
                 content={
                     <>
                         <form>
@@ -51,8 +49,13 @@ export function DashboardPersonaCreateDialog(props: WrappedDialogProps) {
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault()
-                                        createPersonaAndNext()
+                                        if (!checkInputLengthExceed(name) && name.length > 0) {
+                                            createPersonaAndNext()
+                                        }
                                     }
+                                }}
+                                inputProps={{
+                                    maxlength: WALLET_OR_PERSONA_NAME_MAX_LEN,
                                 }}
                                 variant="outlined"
                             />
@@ -67,7 +70,8 @@ export function DashboardPersonaCreateDialog(props: WrappedDialogProps) {
                         disabled={name.length === 0 || checkInputLengthExceed(name)}>
                         {t('create')}
                     </DebounceButton>
-                }></DashboardDialogWrapper>
+                }
+            />
         </DashboardDialogCore>
     )
 }

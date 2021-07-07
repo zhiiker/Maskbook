@@ -23,9 +23,9 @@ import { injectPageInspectorDefault } from '../../social-network/defaults/inject
 import { createTaskStartSetupGuideDefault } from '../../social-network/defaults/inject/StartSetupGuide'
 import { GrayscaleAlgorithm } from '@dimensiondev/stego-js/esm/grayscale'
 import { currentSelectedIdentity } from '../../settings/settings'
-import { ProfileIdentifier } from '@dimensiondev/maskbook-shared'
+import { unreachable } from '@dimensiondev/kit'
+import { ProfileIdentifier } from '@masknet/shared'
 import { globalUIState } from '../../social-network'
-import { unreachable } from '../../utils/utils'
 
 const facebookUI: SocialNetworkUI.Definition = {
     ...facebookBase,
@@ -86,7 +86,6 @@ const facebookUI: SocialNetworkUI.Definition = {
             },
         },
         // Not supported yet
-        toolbar: undefined,
         enhancedPostRenderer: undefined,
         userBadge: undefined,
         searchResult: undefined,

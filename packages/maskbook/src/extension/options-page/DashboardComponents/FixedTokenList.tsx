@@ -1,32 +1,32 @@
-import { useState } from 'react'
-import { uniqBy } from 'lodash-es'
-import { FixedSizeList, FixedSizeListProps } from 'react-window'
-import { makeStyles, createStyles, Typography } from '@material-ui/core'
 import {
-    TokenListsState,
+    currySameAddress,
     useERC20TokensDetailedFromTokenLists,
-} from '../../../web3/hooks/useERC20TokensDetailedFromTokenLists'
-import { useConstant } from '../../../web3/hooks/useConstant'
-import { CONSTANTS } from '../../../web3/constants'
+    TokenListsState,
+    FungibleTokenDetailed,
+    EthereumTokenType,
+    isSameAddress,
+    useEthereumConstants,
+    useTokenConstants,
+} from '@masknet/web3-shared'
+import { makeStyles, Typography } from '@material-ui/core'
+import { uniqBy } from 'lodash-es'
+import { useState } from 'react'
+import { FixedSizeList, FixedSizeListProps } from 'react-window'
 import { useStylesExtends } from '../../../components/custom-ui-helper'
-import { isSameAddress } from '../../../web3/helpers'
 import { TokenInList } from './TokenInList'
-import { ERC20TokenDetailed, EthereumTokenType, EtherTokenDetailed } from '../../../web3/types'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        list: {},
-        placeholder: {},
-    }),
-)
+const useStyles = makeStyles((theme) => ({
+    list: {},
+    placeholder: {},
+}))
 
 export interface FixedTokenListProps extends withClasses<never> {
     keyword?: string
     whitelist?: string[]
     blacklist?: string[]
-    tokens?: (ERC20TokenDetailed | EtherTokenDetailed)[]
+    tokens?: FungibleTokenDetailed[]
     selectedTokens?: string[]
-    onSubmit?(token: EtherTokenDetailed | ERC20TokenDetailed): void
+    onSubmit?(token: FungibleTokenDetailed): void
     FixedSizeListProps?: Partial<FixedSizeListProps>
 }
 
@@ -43,7 +43,7 @@ export function FixedTokenList(props: FixedTokenListProps) {
     } = props
 
     //#region search tokens
-    const ERC20_TOKEN_LISTS = useConstant(CONSTANTS, 'ERC20_TOKEN_LISTS')
+    const { ERC20_TOKEN_LISTS } = useEthereumConstants()
     const [address, setAddress] = useState('')
     const { state, tokensDetailed: erc20TokensDetailed } = useERC20TokensDetailedFromTokenLists(
         ERC20_TOKEN_LISTS,
@@ -52,7 +52,7 @@ export function FixedTokenList(props: FixedTokenListProps) {
     //#endregion
 
     //#region mask token
-    const MASK_ADDRESS = useConstant(CONSTANTS, 'MASK_ADDRESS')
+    const { MASK_ADDRESS } = useTokenConstants()
     //#endregion
 
     //#region UI helpers
@@ -69,12 +69,12 @@ export function FixedTokenList(props: FixedTokenListProps) {
 
     const filteredTokens = erc20TokensDetailed.filter(
         (x) =>
-            (!includeTokens.length || includeTokens.some((y) => isSameAddress(y, x.address))) &&
-            (!excludeTokens.length || !excludeTokens.some((y) => isSameAddress(y, x.address))),
+            (!includeTokens.length || includeTokens.some(currySameAddress(x.address))) &&
+            (!excludeTokens.length || !excludeTokens.some(currySameAddress(x.address))),
     )
     const renderTokens = uniqBy([...tokens, ...filteredTokens], (x) => x.address.toLowerCase()).sort((a, z) => {
-        if (a.type === EthereumTokenType.Ether) return -1
-        if (z.type === EthereumTokenType.Ether) return 1
+        if (a.type === EthereumTokenType.Native) return -1
+        if (z.type === EthereumTokenType.Native) return 1
         if (isSameAddress(a.address, MASK_ADDRESS)) return -1
         if (isSameAddress(z.address, MASK_ADDRESS)) return 1
         return 0
@@ -90,9 +90,7 @@ export function FixedTokenList(props: FixedTokenListProps) {
             itemData={{
                 tokens: renderTokens,
                 selected: [address, ...selectedTokens],
-                onSelect(address: string) {
-                    const token = renderTokens.find((token) => isSameAddress(token.address, address))
-                    if (!token) return
+                onSelect(token: FungibleTokenDetailed) {
                     setAddress(token.address)
                     onSubmit?.(token)
                 },
